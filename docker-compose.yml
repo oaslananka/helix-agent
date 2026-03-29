@@ -1,0 +1,46 @@
+services:
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: helix-msi-agent
+    restart: unless-stopped
+    environment:
+      AGENT_ID: msi
+      AGENT_NAME: "MSI"
+      GATEWAY_WS_URL: wss://gateway.your-domain.com/agent/ws?token=helix-secret-2026
+      AGENT_KEY: helix-secret-2026
+      REPO_ROOTS_JSON: '["/projects"]'
+      LOG_LEVEL: debug
+      MAX_OUTPUT_BYTES: 200000
+      MAX_FILE_BYTES: 2000000
+      MAX_SEARCH_MATCHES: 2000
+      MAX_TREE_ENTRIES: 50000
+      WS_PING_INTERVAL_MS: 15000
+      WS_RECONNECT_MAX_MS: 30000
+      ENABLE_GIT: "true"
+      ENABLE_RUNNER: "true"
+      ENABLE_DOCKER: "true"
+      ENABLE_HTTP_FETCH: "true"
+      ENABLE_SYSTEM_TOOLS: "true"
+      ENABLE_UNRESTRICTED_MODE: "true"
+      AGENT_VERSION: "1.0.0"
+      DOCKER_HOST: "unix:///var/run/docker.sock"
+      AUDIT_LOG_DIR: "/logs"
+      AUDIT_LOG_ENABLED: "true"
+      DASHBOARD_ENABLED: "true"
+      DASHBOARD_PORT: "3001"
+      DASHBOARD_AUTH_TOKEN: "helix-admin-2026"
+    volumes:
+      - /home/msi/Masaüstü/PROJECTS:/projects
+      - /home/msi/helix-agent-logs:/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: "0:0"
+    ports:
+      - "3002:3001"
+    networks:
+      - helix-network
+
+networks:
+  helix-network:
+    driver: bridge

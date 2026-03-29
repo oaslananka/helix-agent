@@ -1,0 +1,63 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  node_version: '20.x'
+  npm_config_cache: '$(Pipeline.Workspace)/.npm'
+
+steps:
+  - checkout: self
+    clean: true
+
+  - task: UseNode@1
+    displayName: Use Node.js $(node_version)
+    inputs:
+      version: '$(node_version)'
+
+  - task: Cache@2
+    displayName: Cache npm packages
+    inputs:
+      key: 'npm | "$(Agent.OS)" | package-lock.json'
+      restoreKeys: |
+        npm | "$(Agent.OS)"
+      path: '$(npm_config_cache)'
+
+  - script: npm ci --cache $(npm_config_cache) --prefer-offline
+    displayName: Install dependencies
+
+  - script: npm run typecheck
+    displayName: Type check
+
+  - script: npx vitest run --coverage --coverage.reporter=text --coverage.reporter=html --coverage.reporter=cobertura
+    displayName: Run tests with coverage
+
+  - script: npm run build
+    displayName: Build
+
+  - script: docker build -t helix-agent:$(Build.BuildId) .
+    displayName: Build Docker image
+
+  - task: PublishCodeCoverageResults@2
+    displayName: Publish code coverage
+    condition: succeededOrFailed()
+    inputs:
+      summaryFileLocation: '$(Build.SourcesDirectory)/coverage/cobertura-coverage.xml'
+      pathToSources: '$(Build.SourcesDirectory)/src'
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish deploy artifact
+    condition: succeeded()
+    inputs:
+      targetPath: '$(Build.SourcesDirectory)'
+      artifact: 'helix-agent'
+      publishLocation: 'pipeline'

@@ -1,0 +1,7 @@
+{
+  "id": "example-greeting",
+  "name": "Example Greeting Plugin",
+  "version": "1.0.0",
+  "description": "Demonstrates the Helix plugin system",
+  "author": "helix-agent"
+}
